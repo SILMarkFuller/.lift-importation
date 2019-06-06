@@ -16,6 +16,7 @@ using System.Windows.Forms;
 using System.Xml;
 using SIL.Lift.Parsing;
 
+
 namespace LiftTest
 {
     class Program
@@ -44,7 +45,7 @@ namespace LiftTest
                 //Import the Ranges file.
                 //flexImporter.LoadLiftRanges(sTempOrigFile + "-ranges"); // temporary (?) fix for FWR-3869.
                                                                         //Import the LIFT data file.
-                int cEntries = parser.ReadLiftFile("C:\\Users\\FullerM\\Documents\\LiftTest\\LiftTest\\testingdata\\testingdata.lift");
+                int cEntries = parser.ReadLiftFile("C:\\Users\\FullerM\\Documents\\LiftTest\\LiftTest\\testingdata\\testingdata.xml");
 
             }
             catch (Exception e)
@@ -74,36 +75,40 @@ namespace LiftTest
 
         public class SkipObject : LiftObject
         {
-            public SkipObject()
+            public SkipObject() : base()
             {
                 
             }
 
             public override string XmlTag => throw new NotImplementedException();
         }
-        public class SkipEntry : LiftEntry
+        public class DocumentEntry : LiftEntry
         {
-            public SkipEntry()
+            public DocumentEntry(Extensible info, Guid guid, int order) : base(info, guid, order)
             {
+                LexicalForm = new LiftMultiText();
+                CitationForm = new LiftMultiText();
+               // Senses = new List<LiftSense>();
 
+                
             }
 
             public override string XmlTag => throw new NotImplementedException();
         }
         public class SkipSense : LiftSense
         {
-            public SkipSense()
+            public SkipSense(Extensible info, Guid guid, LiftObject owner) : base(info, guid, owner)
             {
-
+                Gloss = new LiftMultiText();
             }
 
             public override string XmlTag => throw new NotImplementedException();
         }
         public class SkipExample : LiftExample
         {
-            public SkipExample()
+            public SkipExample() : base()
             {
-
+                Content = new LiftMultiText();
             }
 
             public override string XmlTag => throw new NotImplementedException();
@@ -122,16 +127,24 @@ namespace LiftTest
 
             public void FinishEntry(LiftEntry entry)
             {
-                Console.WriteLine("Upload document to mongo");
                 //throw new NotImplementedException();
+                string CitationForm = "<" + entry.CitationForm + "><";
+                string LexicalForm = "<" + entry.CitationForm + "><";
+                Console.Write("<" + entry.CitationForm + "><");
+                Console.WriteLine(entry.LexicalForm.ToString() + ">" );
+                foreach (var value in entry.Senses)
+                {
+                    Console.WriteLine("<" + value.Gloss.FirstValue.ToString() + "><");
+                }
+                System.IO.File.WriteAllText(@"C:\Users\FullerM\Documents\LiftTest\output.txt", CitationForm);
+                System.IO.File.WriteAllText(@"C:\Users\FullerM\Documents\LiftTest\output.txt", LexicalForm + "\n");
             }
 
             public LiftEntry GetOrMakeEntry(Extensible info, int order)
             {
 
                 // throw new NotImplementedException();
-                LiftEntry dave = new LiftEntry();
-                return new SkipEntry();
+                return new DocumentEntry(info, new Guid(), order);
             }
 
             public LiftExample GetOrMakeExample(LiftSense sense, Extensible info)
@@ -151,21 +164,25 @@ namespace LiftTest
             public LiftSense GetOrMakeSense(LiftEntry entry, Extensible info, string rawXml)
             {
                 // throw new NotImplementedException();
-                LiftSense dave = new LiftSense();
-                return new SkipSense();
+                //LiftSense dave = new LiftSense();
+                // return 
+                return new SkipSense(info, new Guid(), entry);
             }
 
             public LiftSense GetOrMakeSubsense(LiftSense sense, Extensible info, string rawXml)
             {
                 //throw new NotImplementedException();
                 LiftSense dave = new LiftSense();
-                return new SkipSense();
+                return new SkipSense(info, new Guid(), sense);
             }
 
-            public void MergeInCitationForm(LiftEntry entry, LiftMultiText contents)
+            public void MergeInCitationForm(LiftEntry entry, LiftMultiText contents)        //set the source language field
             {
                 // throw new NotImplementedException();
-                LiftEntry dave = new LiftEntry();
+                foreach(var value in contents)
+                {
+                    entry.CitationForm.Add(value.Key, value.Value.Text);
+                }
             }
 
             public void MergeInDefinition(LiftSense sense, LiftMultiText liftMultiText)
@@ -190,9 +207,13 @@ namespace LiftTest
                // throw new NotImplementedException();
             }
 
-            public void MergeInGloss(LiftSense sense, LiftMultiText multiText)
+            public void MergeInGloss(LiftSense sense, LiftMultiText multiText)          //add the glosses
             {
-               // throw new NotImplementedException();
+                foreach (var value in multiText)
+                {
+                    //sense.
+                    sense.Gloss.Add(value.Key, value.Value.Text);
+                }
             }
 
             public void MergeInGrammaticalInfo(LiftObject senseOrReversal, string val, List<Trait> traits)
@@ -200,8 +221,12 @@ namespace LiftTest
                 //throw new NotImplementedException();
             }
 
-            public void MergeInLexemeForm(LiftEntry entry, LiftMultiText contents)
+            public void MergeInLexemeForm(LiftEntry entry, LiftMultiText contents)          //set lexeme form
             {
+                foreach (var key in contents)
+                {
+                    entry.LexicalForm.Add(key.Key, key.Value);
+                }
                 //throw new NotImplementedException();
             }
 
@@ -255,17 +280,19 @@ namespace LiftTest
             public LiftObject MergeInVariant(LiftEntry entry, LiftMultiText contents, string rawXml)
             {
                 //throw new NotImplementedException();
-                LiftEntry dave = new LiftEntry();
                 return new SkipObject();
             }
 
             public void ProcessFieldDefinition(string tag, LiftMultiText description)
             {
                 //throw new NotImplementedException();
+                
             }
 
             public void ProcessRangeElement(string range, string id, string guid, string parent, LiftMultiText description, LiftMultiText label, LiftMultiText abbrev, string rawXml)
             {
+                //Console.WriteLine("Next Entry");
+                /*
                 Console.WriteLine("{");
                 //throw new NotImplementedException();
                 Console.WriteLine("range:" + range);
@@ -275,7 +302,7 @@ namespace LiftTest
                 Console.WriteLine("description:" + description.ToString());
                 Console.WriteLine("label:" + label.ToString());
                 Console.WriteLine("abbrev:" + abbrev.ToString());
-                Console.WriteLine("}");
+                Console.WriteLine("}");*/
             }
         }
     }
