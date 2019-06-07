@@ -56,8 +56,10 @@ namespace LiftTest
             {
                 Console.WriteLine("Executing finally block.");
             }
+            Console.ReadLine(); //Pause
         }
 
+        
         private static void parser_SetProgressMessage(object sender, LiftParser<LiftObject, LiftEntry, LiftSense, LiftExample>.MessageArgs e)
         {
             //throw new NotImplementedException();
@@ -88,9 +90,7 @@ namespace LiftTest
             {
                 LexicalForm = new LiftMultiText();
                 CitationForm = new LiftMultiText();
-               // Senses = new List<LiftSense>();
 
-                
             }
 
             public override string XmlTag => throw new NotImplementedException();
@@ -100,6 +100,8 @@ namespace LiftTest
             public SkipSense(Extensible info, Guid guid, LiftObject owner) : base(info, guid, owner)
             {
                 Gloss = new LiftMultiText();
+                //Trait = new List<LiftTrait>();
+
             }
 
             public override string XmlTag => throw new NotImplementedException();
@@ -122,20 +124,30 @@ namespace LiftTest
         {
             public void EntryWasDeleted(Extensible info, DateTime dateDeleted)
             {
-               throw new NotImplementedException();
+               //throw new NotImplementedException();
             }
 
             public void FinishEntry(LiftEntry entry)
             {
-                //throw new NotImplementedException();
-                string CitationForm = "<" + entry.CitationForm + "><";
-                string LexicalForm = "<" + entry.CitationForm + "><";
-                Console.Write("<" + entry.CitationForm + "><");
-                Console.WriteLine(entry.LexicalForm.ToString() + ">" );
+                string CitationForm = "<" + entry.CitationForm + ">";
+                string LexicalForm = "<" + entry.LexicalForm + ">";
+
+                Console.Write("<" + entry.CitationForm + ">");
+                Console.Write(entry.LexicalForm);
+
                 foreach (var value in entry.Senses)
                 {
-                    Console.WriteLine("<" + value.Gloss.FirstValue.ToString() + "><");
+                    Console.Write("<" + value.Gloss.FirstValue.ToString() + ">");
                 }
+
+                foreach (var val in entry.Fields)
+                {
+                    foreach (var vul in val.Content)
+                    {
+                        Console.WriteLine("<" + vul.Value.Text + ">");
+                    }
+                }
+
                 System.IO.File.WriteAllText(@"C:\Users\FullerM\Documents\LiftTest\output.txt", CitationForm);
                 System.IO.File.WriteAllText(@"C:\Users\FullerM\Documents\LiftTest\output.txt", LexicalForm + "\n");
             }
@@ -143,13 +155,11 @@ namespace LiftTest
             public LiftEntry GetOrMakeEntry(Extensible info, int order)
             {
 
-                // throw new NotImplementedException();
                 return new DocumentEntry(info, new Guid(), order);
             }
 
             public LiftExample GetOrMakeExample(LiftSense sense, Extensible info)
             {
-                // throw new NotImplementedException();
                 LiftEntry dave = new LiftEntry();
                 return new SkipExample();
             }
@@ -163,10 +173,8 @@ namespace LiftTest
 
             public LiftSense GetOrMakeSense(LiftEntry entry, Extensible info, string rawXml)
             {
-                // throw new NotImplementedException();
-                //LiftSense dave = new LiftSense();
-                // return 
-                return new SkipSense(info, new Guid(), entry);
+                SkipSense sense = new SkipSense(info, new Guid(), entry);
+                return sense;
             }
 
             public LiftSense GetOrMakeSubsense(LiftSense sense, Extensible info, string rawXml)
@@ -178,7 +186,6 @@ namespace LiftTest
 
             public void MergeInCitationForm(LiftEntry entry, LiftMultiText contents)        //set the source language field
             {
-                // throw new NotImplementedException();
                 foreach(var value in contents)
                 {
                     entry.CitationForm.Add(value.Key, value.Value.Text);
@@ -193,7 +200,7 @@ namespace LiftTest
             public LiftObject MergeInEtymology(LiftEntry entry, string source, string type, LiftMultiText form, LiftMultiText gloss, string rawXml)
             {
                 // throw new NotImplementedException();
-               
+                //hi
                 return new SkipObject();
             }
 
@@ -204,14 +211,15 @@ namespace LiftTest
 
             public void MergeInField(LiftObject extensible, string typeAttribute, DateTime dateCreated, DateTime dateModified, LiftMultiText contents, List<Trait> traits)
             {
-               // throw new NotImplementedException();
+               LiftMultiText textentry =  new LiftMultiText(contents.FirstValue.Key.ToString(), contents.FirstValue.Value.Text.ToString());
+                LiftField fieldentry = new LiftField(typeAttribute, textentry);
+                extensible.Fields.Add( fieldentry );
             }
 
-            public void MergeInGloss(LiftSense sense, LiftMultiText multiText)          //add the glosses
+            public void MergeInGloss(LiftSense sense, LiftMultiText multiText)
             {
                 foreach (var value in multiText)
                 {
-                    //sense.
                     sense.Gloss.Add(value.Key, value.Value.Text);
                 }
             }
@@ -221,7 +229,7 @@ namespace LiftTest
                 //throw new NotImplementedException();
             }
 
-            public void MergeInLexemeForm(LiftEntry entry, LiftMultiText contents)          //set lexeme form
+            public void MergeInLexemeForm(LiftEntry entry, LiftMultiText contents)        
             {
                 foreach (var key in contents)
                 {
@@ -269,7 +277,10 @@ namespace LiftTest
 
             public void MergeInTrait(LiftObject extensible, Trait trait)
             {
-                //throw new NotImplementedException();
+                LiftTrait newTrait = new LiftTrait();
+                newTrait.Name = trait.Name;
+                newTrait.Value = trait.Value;
+                extensible.Traits.Add(newTrait);
             }
 
             public void MergeInTranslationForm(LiftExample example, string type, LiftMultiText multiText, string rawXml)
